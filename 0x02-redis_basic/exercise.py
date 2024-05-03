@@ -59,3 +59,29 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
+
+    def replay(method: Callable):
+        input_key = method.__qualname__ + ":inputs"
+        output_key = method.__qualname__ + ":outputs"
+
+        inputs = cache._redis.lrange(input_key, 0, -1)
+        outputs = cache._redis.lrange(output_key, 0, -1)
+
+        if not inputs or not outputs:
+            print("No history found for this method.")
+            return
+
+        print(f"{method.__qualname__} was called {len(inputs)} times:")
+
+        for inp, out in zip(inputs, outputs):
+            inp = eval(inp.decode())
+            out = out.decode()
+            print(f"{method.__qualname__}(*{inp}) -> {out}")
+
+
+# Example usage:
+cache = Cache()
+cache.store("foo")
+cache.store("bar")
+cache.store(42)
+Cache.replay(cache.store)

@@ -5,6 +5,7 @@ from typing import Union, Callable
 from functools import wraps
 from main import Cache
 
+
 def count_calls(method: Callable) -> Callable:
     @wraps(method)
     def wrapper(self, *args, **kwargs):
@@ -59,4 +60,3 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
-    

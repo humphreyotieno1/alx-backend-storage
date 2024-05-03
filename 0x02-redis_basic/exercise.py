@@ -38,3 +38,23 @@ class Cache:
 
     def get_int(self, key: str) -> Union[int, None]:
         return self.get(key, fn=int)
+    def call_history(method: Callable) -> Callable:
+        @wraps(method)
+        def wrapper(self, *args, **kwargs):
+            input_key = method.__qualname__ + ":inputs"
+            output_key = method.__qualname__ + ":outputs"
+            
+            self._redis.rpush(input_key, str(args))
+            
+            output = method(self, *args, **kwargs)
+            
+            self._redis.rpush(output_key, output)
+            
+            return output
+        return wrapper
+
+    @call_history
+    def store(self, data: Union[str, bytes, int, float]) -> str:
+        key = str(uuid.uuid4())
+        self._redis.set(key, data)
+        return key
